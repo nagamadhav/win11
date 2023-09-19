@@ -1,0 +1,30 @@
+: Install Prometheus Windows Exporter
+  hosts: 10.10.5.184
+  gather_facts: no
+  tasks:
+    - name: Create Exporter Directory
+      win_file:
+        path: C:\PrometheusExporter
+        state: directory
+    - name: Download Prometheus Windows Exporter
+      win_get_url:
+        url: https://github.com/prometheus-community/windows_exporter/releases/download/v0.23.1/windows_exporter-0.23.1-amd64.exe
+        dest: C:\PrometheusExporter\windows_exporter.exe
+      register: download_result
+    - name: Create Windows Exporter Service
+      win_shell: >
+        
+        New-Service -Name "Prometheus-Windows-Exporter" -BinaryPathName "C:\PrometheusExporter\windows_exporter.exe --collectors.enabled=default"
+
+
+        Start-Service "Windows-Exporter"
+      when: download_result.changed
+    - name: Set Windows Exporter to Auto-Start
+      win_service:
+        name: Windows-Exporter
+        start_mode: auto
+      when: download_result.changed
+    - name: Verify Windows Exporter is Running
+      win_service:
+        name: Windows-Exporter
+        state: started
