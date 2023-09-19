@@ -1,4 +1,5 @@
-name: Install Prometheus Windows Exporter
+---
+- name: Install Prometheus Windows Exporter
   hosts: 10.10.5.184
   gather_facts: no
   tasks:
