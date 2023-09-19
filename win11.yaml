@@ -5,27 +5,23 @@
   tasks:
     - name: Download Windows Exporter
       win_get_url:
-        url: https://github.com/prometheus-community/windows_exporter/releases/download/v0.17.0/windows_exporter-0.17.0-amd64.zip
-        dest: C:\prometheusExporter/windows_exporter.exe
-    - name: Extract Windows Exporter
-      win_unzip:
-        src: C:\Temp\windows_exporter.zip
-        dest: C:\Program Files\windows_exporter
-      args:
-        creates: C:\Program Files\windows_exporter\windows_exporter.exe
-    - name: Configure Windows Exporter Service
+        url: https://github.com/prometheus-community/windows_exporter/releases/download/v0.18.1/windows_exporter-0.18.1-amd64.exe
+        dest: C:\Prometheus\windows_exporter.exe
+      register: download_result
+    - name: Ensure Prometheus Directory Exists
+      win_file:
+        path: C:\Prometheus
+        state: directory
+    - name: Create Windows Exporter Service
       win_shell: >
-        New-Service -Name windows_exporter -BinaryPathName "C:\Program
-        Files\windows_exporter\windows_exporter.exe --web.listen-address=:9182"
-        -DisplayName "Windows Exporter"
-
-        Set-Service -Name windows_exporter -StartupType 'Automatic'
-
-        Start-Service -Name windows_exporter
-    - name: Open Port 9182 in Windows Firewall
-      win_firewall_rule:
-        name: Windows-Exporter
-        port: 9182
-        protocol: TCP
-        state: present
-        enabled: yes
+        New-Service -Name "Prometheus-Windows-Exporter" -BinaryPathName
+        "C:\Prometheus\windows_exporter.exe
+        --collectors.enabled="cpu,logon,logical_disk,mem,net,os,system,thermal_zone""
+        -DisplayName "Prometheus Windows Exporter" -Description "Prometheus
+        Windows Exporter Service" -StartupType Automatic
+      when: download_result.changed
+    - name: Start Windows Exporter Service
+      win_service:
+        name: Prometheus-Windows-Exporter
+        state: started
+      when: download_result.changed
