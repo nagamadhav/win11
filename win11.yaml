@@ -1,31 +1,31 @@
 ---
-- name: Install Prometheus Windows Exporter
+- name: Install Windows Exporter
   hosts: 10.10.5.184
-  gather_facts: no
+  become: yes
   tasks:
-    - name: Create Exporter Directory
-      win_file:
-        path: C:\PrometheusExporter
-        state: directory
-    - name: Download Prometheus Windows Exporter
+    - name: Download Windows Exporter
       win_get_url:
-        url: https://github.com/prometheus-community/windows_exporter/releases/download/v0.23.1/windows_exporter-0.23.1-amd64.exe
-        dest: C:\PrometheusExporter\windows_exporter.exe
-      register: download_result
-    - name: Create Windows Exporter Service
+        url: https://github.com/prometheus-community/windows_exporter/releases/download/v0.17.0/windows_exporter-0.17.0-amd64.zip
+        dest: C:\prometheusExporter/windows_exporter.exe
+    - name: Extract Windows Exporter
+      win_unzip:
+        src: C:\Temp\windows_exporter.zip
+        dest: C:\Program Files\windows_exporter
+      args:
+        creates: C:\Program Files\windows_exporter\windows_exporter.exe
+    - name: Configure Windows Exporter Service
       win_shell: >
-        
-        New-Service -Name "Prometheus-Windows-Exporter" -BinaryPathName "C:\PrometheusExporter\windows_exporter.exe --collectors.enabled=default"
+        New-Service -Name windows_exporter -BinaryPathName "C:\Program
+        Files\windows_exporter\windows_exporter.exe --web.listen-address=:9182"
+        -DisplayName "Windows Exporter"
 
+        Set-Service -Name windows_exporter -StartupType 'Automatic'
 
-        Start-Service "Windows-Exporter"
-      when: download_result.changed
-    - name: Set Windows Exporter to Auto-Start
-      win_service:
+        Start-Service -Name windows_exporter
+    - name: Open Port 9182 in Windows Firewall
+      win_firewall_rule:
         name: Windows-Exporter
-        start_mode: auto
-      when: download_result.changed
-    - name: Verify Windows Exporter is Running
-      win_service:
-        name: Windows-Exporter
-        state: started
+        port: 9182
+        protocol: TCP
+        state: present
+        enabled: yes
