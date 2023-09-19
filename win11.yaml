@@ -14,7 +14,7 @@
         state: directory
     - name: Create Windows Exporter Service
       win_shell: >
-        New-Service -Name "Prometheus-Windows-Exporter" -BinaryPathName
+        New-Service -Name "Windows-Exporter" -BinaryPathName
         "C:\Prometheus\windows_exporter.exe
         --collectors.enabled="cpu,logon,logical_disk,mem,net,os,system,thermal_zone""
         -DisplayName "Prometheus Windows Exporter" -Description "Prometheus
@@ -22,6 +22,6 @@
       when: download_result.changed
     - name: Start Windows Exporter Service
       win_service:
-        name: Prometheus-Windows-Exporter
+        name: Windows-Exporter
         state: started
       when: download_result.changed
